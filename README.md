@@ -4,7 +4,7 @@ Simple API to get informations about a user on Discord.
 
 ### ⚠ Do not use this API in production
 
-This API is used by several of my projects. It is public for the moment (https://diswho.androz2091.fr) but I don't guarantee its availability.
+This API is used by some of my projects. It is public (https://diswho.androz2091.fr) but I don't guarantee its availability, and it could become offline overnight if I don't need it for my projects. So host it yourself if you need it.
 
 ### Doc
 
