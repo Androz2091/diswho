@@ -50,6 +50,7 @@ func fetchUser(id string, w http.ResponseWriter) {
 func homeLink(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	fetchUser(id, w)
 }
 
