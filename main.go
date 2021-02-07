@@ -17,7 +17,12 @@ type Config struct {
 
 var userCache = make(map[string]string)
 
-func fetchUser(id string, w http.ResponseWriter) {
+func userRoute(w http.ResponseWriter, r *http.Request) {
+
+	id := mux.Vars(r)["id"]
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	cachedUser, cached := userCache[id]
 	if cached {
@@ -47,13 +52,6 @@ func fetchUser(id string, w http.ResponseWriter) {
 	}
 }
 
-func homeLink(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	fetchUser(id, w)
-}
-
 func main() {
 
 	viper.SetConfigFile("config.yml")
@@ -62,6 +60,6 @@ func main() {
 	}
 
 	router := mux.NewRouter().StrictSlash(true)
-	router.Path("/user/{id:[0-9]{16,32}}").HandlerFunc(homeLink)
+	router.Path("/user/{id:[0-9]{16,32}}").HandlerFunc(userRoute)
 	log.Fatal(http.ListenAndServe(":" + viper.GetString("port"), router))
 }
