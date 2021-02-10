@@ -8,5 +8,5 @@ This API is used by some of my projects. It is public (https://diswho.androz2091
 
 ### Doc
 
-`GET` - `https://diswho.androz2091.fr/user/558326225043456011` Shows information about the user
+`GET` - `https://diswho.androz2091.fr/user/558326225043456011` Shows information about the user  
 `GET` - `https://diswho.androz2091.fr/invite/qpXJGzmZgH` Shows information about the invite
