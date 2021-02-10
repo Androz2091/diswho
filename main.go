@@ -52,6 +52,35 @@ func userRoute(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func inviteRoute(w http.ResponseWriter, r *http.Request) {
+
+	code := mux.Vars(r)["code"]
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	client := &http.Client{}
+	req, getErr := http.NewRequest("GET", "https://discord.com/api/v8/invites/" + code, nil)
+	if getErr != nil {
+		log.Fatal(getErr)
+	}
+	req.Header.Add("Authorization", "Bot " + viper.GetString("token"))
+	res, getErr := client.Do(req)
+	fmt.Printf("HTTP: %s\n", res.Status)
+	if getErr != nil {
+		log.Fatal(getErr)
+	}
+	if res.Body != nil {
+		defer res.Body.Close()
+	}
+	body, readErr := ioutil.ReadAll(res.Body)
+	if readErr != nil {
+		log.Fatal(readErr)
+	}
+	fmt.Fprintf(w, string(body))
+	
+}
+
 func main() {
 
 	viper.SetConfigFile("config.yml")
@@ -61,5 +90,6 @@ func main() {
 
 	router := mux.NewRouter().StrictSlash(true)
 	router.Path("/user/{id:[0-9]{16,32}}").HandlerFunc(userRoute)
+	router.Path("/invite/{code:[a-zA-Z0-9]+}").HandlerFunc(inviteRoute)
 	log.Fatal(http.ListenAndServe(":" + viper.GetString("port"), router))
 }
