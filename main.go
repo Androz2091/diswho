@@ -101,7 +101,8 @@ func main() {
 	lmt.SetOnLimitReached(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("A request was rejected")
 	})
-	
+	lmt.SetIPLookups([]string{"X-Forwarded-For", "X-Real-IP"})
+
 	router.Handle("/user/{id:[0-9]{16,32}}", tollbooth.LimitFuncHandler(lmt, userRoute)).Methods("GET")
 	router.Handle("/invite/{code:[a-zA-Z0-9]+}", tollbooth.LimitFuncHandler(lmt, inviteRoute)).Methods("GET")
 	log.Fatal(http.ListenAndServe(":" + viper.GetString("port"), router))
