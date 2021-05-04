@@ -16,11 +16,6 @@ type Config struct {
 	token string
 }
 
-lmt := tollbooth.NewLimiter(11, nil)
-lmt.SetMessage("You have reached maximum request limit.")
-lmt.SetMessageContentType("text/plain; charset=utf-8")
-lmt.SetOnLimitReached(func(w http.ResponseWriter, r *http.Request) { fmt.Println("A request was rejected") })
-
 var userCache = make(map[string]string)
 
 func userRoute(w http.ResponseWriter, r *http.Request) {
@@ -40,13 +35,13 @@ func userRoute(w http.ResponseWriter, r *http.Request) {
 		if getErr != nil {
 			log.Fatal(getErr)
 		}
-		req.Header.Add("Authorization", "Bots " + viper.GetString("token"))
+		req.Header.Add("Authorization", "Bot " + viper.GetString("token"))
 		res, getErr := client.Do(req)
 		fmt.Printf("HTTP: %s\n", res.Status)
 		if getErr != nil {
 			log.Fatal(getErr)
 		}
-		if res.Status != "200" {
+		if res.Status != "200 OK" {
 			http.Error(w, "Cannot fetch the Discord API", http.StatusInternalServerError)
 		} else {
 			if res.Body != nil {
@@ -99,8 +94,15 @@ func main() {
 	}
 
 	router := mux.NewRouter().StrictSlash(true)
+
+	lmt := tollbooth.NewLimiter(11, nil)
+	lmt.SetMessage("You have reached maximum request limit.")
+	lmt.SetMessageContentType("text/plain; charset=utf-8")
+	lmt.SetOnLimitReached(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("A request was rejected")
+	})
 	
 	router.Handle("/user/{id:[0-9]{16,32}}", tollbooth.LimitFuncHandler(lmt, userRoute)).Methods("GET")
-	router.Path("/invite/{code:[a-zA-Z0-9]+}", tollbooth.LimitFuncHandler(lmt, inviteRoute)).Methods("GET")
+	router.Handle("/invite/{code:[a-zA-Z0-9]+}", tollbooth.LimitFuncHandler(lmt, inviteRoute)).Methods("GET")
 	log.Fatal(http.ListenAndServe(":" + viper.GetString("port"), router))
 }
