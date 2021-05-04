@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"io/ioutil"
 
+	"github.com/didip/tollbooth"
 	"github.com/gorilla/mux"
 	"github.com/spf13/viper"
 )
@@ -34,21 +35,25 @@ func userRoute(w http.ResponseWriter, r *http.Request) {
 		if getErr != nil {
 			log.Fatal(getErr)
 		}
-		req.Header.Add("Authorization", "Bot " + viper.GetString("token"))
+		req.Header.Add("Authorization", "Bots " + viper.GetString("token"))
 		res, getErr := client.Do(req)
 		fmt.Printf("HTTP: %s\n", res.Status)
 		if getErr != nil {
 			log.Fatal(getErr)
 		}
-		if res.Body != nil {
-			defer res.Body.Close()
+		if res.Status != "200" {
+			http.Error(w, "Cannot fetch the Discord API", http.StatusInternalServerError)
+		} else {
+			if res.Body != nil {
+				defer res.Body.Close()
+			}
+			body, readErr := ioutil.ReadAll(res.Body)
+			if readErr != nil {
+				log.Fatal(readErr)
+			}
+			userCache[id] = string(body)
+			fmt.Fprintf(w, string(body))
 		}
-		body, readErr := ioutil.ReadAll(res.Body)
-		if readErr != nil {
-			log.Fatal(readErr)
-		}
-		userCache[id] = string(body)
-		fmt.Fprintf(w, string(body))
 	}
 }
 
@@ -89,7 +94,8 @@ func main() {
 	}
 
 	router := mux.NewRouter().StrictSlash(true)
-	router.Path("/user/{id:[0-9]{16,32}}").HandlerFunc(userRoute)
+	
+	router.Handle("/user/{id:[0-9]{16,32}}", tollbooth.LimitFuncHandler(tollbooth.NewLimiter(11, nil), userRoute)).Methods("GET")
 	router.Path("/invite/{code:[a-zA-Z0-9]+}").HandlerFunc(inviteRoute)
 	log.Fatal(http.ListenAndServe(":" + viper.GetString("port"), router))
 }
